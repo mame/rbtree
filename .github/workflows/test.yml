@@ -23,4 +23,4 @@ jobs:
         make
     - name: Run the test suite
       run: |
-        ruby test.rb
+        rake
