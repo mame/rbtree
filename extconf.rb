@@ -5,6 +5,7 @@ if enable_config('debug')
 else
   $defs << '-DNDEBUG'
 end
+have_header('ruby/version.h')
 have_func('rb_exec_recursive', 'ruby.h')
 have_func('rb_exec_recursive_paired', 'ruby.h')
 have_func('rb_proc_lambda_p', 'ruby.h')
