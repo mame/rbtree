@@ -3,6 +3,9 @@
  * Copyright (c) 2002-2013 OZAWA Takuma
  */
 #include <ruby.h>
+#ifdef HAVE_RUBY_VERSION_H
+#include <ruby/version.h>
+#endif
 #ifdef HAVE_RUBY_ST_H
 #include <ruby/st.h>
 #else
@@ -1276,6 +1279,13 @@ to_a_i(dnode_t* node, void* ary)
     return EACH_NEXT;
 }
 
+
+#if defined(RUBY_API_VERSION_CODE) && RUBY_API_VERSION_CODE >= 30100
+#  define RBTREE_OBJ_INFECT(obj1, obj2)
+#else
+#  define RBTREE_OBJ_INFECT(obj1, obj2) OBJ_INFECT(obj1, obj2)
+#endif
+
 /*
  *
  */
@@ -1284,7 +1294,7 @@ rbtree_to_a(VALUE self)
 {
     VALUE ary = rb_ary_new2(dict_count(DICT(self)));
     rbtree_for_each(self, to_a_i, (void*)ary);
-    OBJ_INFECT(ary, self);
+    RBTREE_OBJ_INFECT(ary, self);
     return ary;
 }
 
@@ -1310,7 +1320,7 @@ rbtree_to_hash(VALUE self)
     RHASH_SET_IFNONE(hash, IFNONE(self));
     if (FL_TEST(self, RBTREE_PROC_DEFAULT))
         FL_SET(hash, HASH_PROC_DEFAULT);
-    OBJ_INFECT(hash, self);
+    RBTREE_OBJ_INFECT(hash, self);
     return hash;
 }
 
@@ -1345,13 +1355,13 @@ inspect_i(dnode_t* node, void* result_)
 
     str = rb_inspect(GET_KEY(node));
     rb_str_append(result, str);
-    OBJ_INFECT(result, str);
+    RBTREE_OBJ_INFECT(result, str);
 
     rb_str_cat2(result, "=>");
 
     str = rb_inspect(GET_VAL(node));
     rb_str_append(result, str);
-    OBJ_INFECT(result, str);
+    RBTREE_OBJ_INFECT(result, str);
 
     return EACH_NEXT;
 }
@@ -1370,15 +1380,15 @@ inspect_rbtree(VALUE self, VALUE result)
     str = rb_inspect(IFNONE(self));
     rb_str_cat2(result, ", default=");
     rb_str_append(result, str);
-    OBJ_INFECT(result, str);
+    RBTREE_OBJ_INFECT(result, str);
 
     str = rb_inspect(CMP_PROC(self));
     rb_str_cat2(result, ", cmp_proc=");
     rb_str_append(result, str);
-    OBJ_INFECT(result, str);
+    RBTREE_OBJ_INFECT(result, str);
 
     rb_str_cat2(result, ">");
-    OBJ_INFECT(result, self);
+    RBTREE_OBJ_INFECT(result, self);
     return result;
 }
 
