@@ -141,15 +141,17 @@ rbtree_cmp(const void* key1, const void* key2, void* context)
 }
 
 static VALUE
-rbtree_user_cmp_ensure(rbtree_t* rbtree)
+rbtree_user_cmp_ensure(VALUE arg)
 {
+    rbtree_t* rbtree = (rbtree_t*)arg;
     rbtree->iter_lev--;
     return Qnil;
 }
 
 static VALUE
-rbtree_user_cmp_body(VALUE* args)
+rbtree_user_cmp_body(VALUE arg)
 {
+    VALUE *args = (VALUE*)arg;
     rbtree_t* rbtree = (rbtree_t*)args[2];
     rbtree->iter_lev++;
     return rb_funcall2(rbtree->cmp_proc, id_call, 2, args);
@@ -323,8 +325,9 @@ typedef struct {
 } rbtree_insert_arg_t;
 
 static VALUE
-insert_node_body(rbtree_insert_arg_t* arg)
+insert_node_body(VALUE arg_)
 {
+    rbtree_insert_arg_t* arg = (rbtree_insert_arg_t*)arg_;
     dict_t* dict = arg->dict;
     dnode_t* node = arg->node;
 
@@ -341,8 +344,9 @@ insert_node_body(rbtree_insert_arg_t* arg)
 }
 
 static VALUE
-insert_node_ensure(rbtree_insert_arg_t* arg)
+insert_node_ensure(VALUE arg_)
 {
+    rbtree_insert_arg_t* arg = (rbtree_insert_arg_t*)arg_;
     dict_t* dict = arg->dict;
     dnode_t* node = arg->node;
 
@@ -594,8 +598,9 @@ rbtree_each_ensure(VALUE self)
 }
 
 static VALUE
-rbtree_each_body(rbtree_each_arg_t* arg)
+rbtree_each_body(VALUE arg_)
 {
+    rbtree_each_arg_t* arg = (rbtree_each_arg_t*)arg_;
     VALUE self = arg->self;
     dict_t* dict = DICT(self);
     dnode_t* node;
@@ -892,8 +897,9 @@ typedef struct {
 } rbtree_remove_if_arg_t;
 
 static VALUE
-rbtree_remove_if_ensure(rbtree_remove_if_arg_t* arg)
+rbtree_remove_if_ensure(VALUE arg_)
 {
+    rbtree_remove_if_arg_t* arg = (rbtree_remove_if_arg_t*)arg_;
     dict_t* dict = DICT(arg->self);
     dnode_list_t* list = arg->list;
 
@@ -910,8 +916,9 @@ rbtree_remove_if_ensure(rbtree_remove_if_arg_t* arg)
 }
 
 static VALUE
-rbtree_remove_if_body(rbtree_remove_if_arg_t* arg)
+rbtree_remove_if_body(VALUE arg_)
 {
+    rbtree_remove_if_arg_t* arg = (rbtree_remove_if_arg_t*)arg_;
     VALUE self = arg->self;
     dict_t* dict = DICT(self);
     dnode_t* node;
@@ -1462,8 +1469,9 @@ typedef struct {
 } rbtree_bound_arg_t;
 
 static VALUE
-rbtree_bound_body(rbtree_bound_arg_t* arg)
+rbtree_bound_body(VALUE arg_)
 {
+    rbtree_bound_arg_t* arg = (rbtree_bound_arg_t*)arg_;
     VALUE self = arg->self;
     dict_t* dict = DICT(self);
     dnode_t* lower_node = arg->lower_node;
@@ -1714,16 +1722,18 @@ typedef struct {
 } pp_pair_arg_t;
 
 static VALUE
-pp_value(VALUE nil, pp_pair_arg_t* pair_arg)
+pp_value(RB_BLOCK_CALL_FUNC_ARGLIST(nil, arg))
 {
+    pp_pair_arg_t* pair_arg = (pp_pair_arg_t*)arg;
     VALUE pp = pair_arg->pp;
     rb_funcall(pp, id_breakable, 1, rb_str_new(NULL, 0));
     return rb_funcall(pp, id_pp, 1, GET_VAL(pair_arg->node));
 }
 
 static VALUE
-pp_pair(VALUE nil, pp_pair_arg_t* pair_arg)
+pp_pair(RB_BLOCK_CALL_FUNC_ARGLIST(nil, arg))
 {
+    pp_pair_arg_t* pair_arg = (pp_pair_arg_t*)arg;
     VALUE pp = pair_arg->pp;
     VALUE group_args[4];
     group_args[0] = pp;
@@ -1772,8 +1782,9 @@ typedef struct {
 } pp_rbtree_arg_t;
 
 static VALUE
-pp_each_pair(VALUE nil, pp_rbtree_arg_t* rbtree_arg)
+pp_each_pair(RB_BLOCK_CALL_FUNC_ARGLIST(nil, arg))
 {
+    pp_rbtree_arg_t* rbtree_arg = (pp_rbtree_arg_t*)arg;
     pp_each_pair_arg_t each_pair_arg;
     each_pair_arg.pp = rbtree_arg->pp;
     each_pair_arg.first = 1;
@@ -1781,8 +1792,9 @@ pp_each_pair(VALUE nil, pp_rbtree_arg_t* rbtree_arg)
 }
 
 static VALUE
-pp_rbtree(VALUE nil, pp_rbtree_arg_t* rbtree_arg)
+pp_rbtree(RB_BLOCK_CALL_FUNC_ARGLIST(nil, arg))
 {
+    pp_rbtree_arg_t* rbtree_arg = (pp_rbtree_arg_t*)arg;
     VALUE pp = rbtree_arg->pp;
     VALUE rbtree = rbtree_arg->rbtree;
 
