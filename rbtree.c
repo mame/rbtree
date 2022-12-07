@@ -1943,7 +1943,7 @@ rbtree_s_load(VALUE klass, VALUE str)
  * A sorted associative collection that cannot contain duplicate
  * keys. RBTree is a subclass of MultiRBTree.
  */
-void Init_rbtree()
+void Init_rbtree(void)
 {
     MultiRBTree = rb_define_class("MultiRBTree",
 #ifdef HAVE_RB_CDATA
