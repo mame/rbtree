@@ -773,7 +773,11 @@ copy_dict(VALUE src, VALUE dest, dict_comp_t cmp_func, VALUE cmp_proc)
     }
     rbtree_free(RBTREE(temp));
     RBTREE(temp) = NULL;
+#if defined(RUBY_API_VERSION_CODE) && RUBY_API_VERSION_CODE >= 30100
+    /* do nothing */
+#else
     rb_gc_force_recycle(temp);
+#endif
 
     DICT(dest)->dict_context = RBTREE(dest);
     CMP_PROC(dest) = cmp_proc;
