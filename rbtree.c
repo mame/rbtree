@@ -134,7 +134,7 @@ static int
 rbtree_cmp(const void* key1, const void* key2, void* context)
 {
     VALUE result;
-    if (TYPE(key1) == T_STRING && TYPE(key2) == T_STRING)
+    if (TYPE((VALUE)key1) == T_STRING && TYPE((VALUE)key2) == T_STRING)
         return rb_str_cmp((VALUE)key1, (VALUE)key2);
     result = rb_funcall2((VALUE)key1, id_cmp, 1, (VALUE*)&key2);
     return rb_cmpint(result, (VALUE)key1, (VALUE)key2);
