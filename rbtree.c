@@ -1709,11 +1709,27 @@ static ID id_object_group;
 static ID id_pp;
 static ID id_text;
 
+#if defined(RUBY_VERSION_MAJOR) && RUBY_VERSION_MAJOR == 1 && RUBY_VERSION_MINOR == 8
+#define RUBY_1_8
+#endif
+
+#ifdef RUBY_1_8
 static VALUE
 pp_group(VALUE args_)
 {
     VALUE* args = (VALUE*)args_;
     return rb_funcall(args[0], id_group, 3, args[1], args[2], args[3]);
+}
+#endif
+
+static VALUE
+call_group_with_block(VALUE *group_args, VALUE (*blk)(RB_BLOCK_CALL_FUNC_ARGLIST(nil, arg)), VALUE data)
+{
+#ifdef RUBY_1_8
+    return rb_iterate(pp_group, (VALUE)&group_args, blk, data);
+#else
+    return rb_block_call(group_args[0], id_group, 3, group_args + 1, blk, data);
+#endif
 }
 
 typedef struct {
@@ -1743,7 +1759,7 @@ pp_pair(RB_BLOCK_CALL_FUNC_ARGLIST(nil, arg))
 
     rb_funcall(pp, id_pp, 1, GET_KEY(pair_arg->node));
     rb_funcall(pp, id_text, 1, rb_str_new2("=>"));
-    return rb_iterate(pp_group, (VALUE)&group_args, pp_value, (VALUE)pair_arg);
+    return call_group_with_block(group_args, pp_value, (VALUE)pair_arg);
 }
 
 typedef struct {
@@ -1772,7 +1788,7 @@ pp_each_pair_i(dnode_t* node, void* each_pair_arg_)
     pair_arg.pp = each_pair_arg->pp;
     pair_arg.node = node;
 
-    rb_iterate(pp_group, (VALUE)&group_args, pp_pair, (VALUE)&pair_arg);
+    call_group_with_block(group_args, pp_pair, (VALUE)&pair_arg);
     return EACH_NEXT;
 }
 
@@ -1805,7 +1821,7 @@ pp_rbtree(RB_BLOCK_CALL_FUNC_ARGLIST(nil, arg))
     group_args[3] = rb_str_new2("}");
 
     rb_funcall(pp, id_text, 1, rb_str_new2(": "));
-    rb_iterate(pp_group, (VALUE)&group_args, pp_each_pair, (VALUE)rbtree_arg);
+    call_group_with_block(group_args, pp_each_pair, (VALUE)rbtree_arg);
     rb_funcall(pp, id_comma_breakable, 0);
     rb_funcall(pp, id_text, 1, rb_str_new2("default="));
     rb_funcall(pp, id_pp, 1, IFNONE(rbtree));
@@ -1814,12 +1830,14 @@ pp_rbtree(RB_BLOCK_CALL_FUNC_ARGLIST(nil, arg))
     return rb_funcall(pp, id_pp, 1, CMP_PROC(rbtree));
 }
 
+#ifdef RUBY_1_8
 static VALUE
 pp_rbtree_group(VALUE arg_)
 {
     pp_rbtree_arg_t* arg = (pp_rbtree_arg_t*)arg_;
     return rb_funcall(arg->pp, id_object_group, 1, arg->rbtree);
 }
+#endif
 
 /*********************************************************************/
 
@@ -1832,7 +1850,11 @@ rbtree_pretty_print(VALUE self, VALUE pp)
     pp_rbtree_arg_t arg;
     arg.rbtree = self;
     arg.pp = pp;
+#ifdef RUBY_1_8
     return rb_iterate(pp_rbtree_group, (VALUE)&arg, pp_rbtree, (VALUE)&arg);
+#else
+    return rb_block_call(arg.pp, id_object_group, 1, &self, pp_rbtree, (VALUE)&arg);
+#endif
 }
 
 /* :nodoc:
