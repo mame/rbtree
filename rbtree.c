@@ -16,24 +16,6 @@
 #define RBTREE_PROC_DEFAULT FL_USER2
 #define HASH_PROC_DEFAULT   FL_USER2
 
-#ifdef RETURN_SIZED_ENUMERATOR
-#define HAVE_SIZED_ENUMERATOR
-#else
-#ifdef RETURN_ENUMERATOR
-#define RETURN_SIZED_ENUMERATOR(obj, argc, argv, size_fn) RETURN_ENUMERATOR(obj, argc, argv)
-#else
-#define RETURN_SIZED_ENUMERATOR(obj, argc, argv, size_fn) ((void)0)
-#endif
-#endif
-
-#ifndef RARRAY_AREF
-#define RARRAY_AREF(a, i) (RARRAY_PTR(a)[i])
-#endif
-
-#ifndef RHASH_SET_IFNONE
-#define RHASH_SET_IFNONE(h, v) (RHASH(h)->ifnone = (v))
-#endif
-
 VALUE RBTree;
 VALUE MultiRBTree;
 
@@ -132,7 +114,6 @@ rbtree_check_argument_count(const int argc, const int min, const int max)
 static void
 rbtree_check_proc_arity(VALUE proc, const int expected)
 {
-#ifdef HAVE_RB_PROC_LAMBDA_P
     if (rb_proc_lambda_p(proc)) {
         const int arity = rb_proc_arity(proc);
         const int min = arity < 0 ? -arity - 1 : arity;
@@ -141,7 +122,6 @@ rbtree_check_proc_arity(VALUE proc, const int expected)
             rb_raise(rb_eTypeError, "proc takes %d arguments", expected);
         }
     }
-#endif
 }
 
 static int
@@ -582,13 +562,7 @@ rbtree_equal(VALUE self, VALUE other)
 
         return Qfalse;
     }
-#if defined(HAVE_RB_EXEC_RECURSIVE_PAIRED)
     return rb_exec_recursive_paired(rbtree_recursive_equal, self, other, other);
-#elif defined(HAVE_RB_EXEC_RECURSIVE)
-    return rb_exec_recursive(rbtree_recursive_equal, self, other);
-#else
-    return rbtree_recursive_equal(self, other, 0);
-#endif
 }
 
 /*********************************************************************/
@@ -770,11 +744,7 @@ static void
 copy_dict(VALUE src, VALUE dest, dict_comp_t cmp_func, VALUE cmp_proc)
 {
     VALUE temp = rbtree_alloc(CLASS_OF(dest));
-#ifdef HAVE_RB_OBJ_HIDE
     rb_obj_hide(temp);
-#else
-    RBASIC(temp)->klass = 0;
-#endif
     DICT(temp)->dict_compare = cmp_func;
     CMP_PROC(temp) = cmp_proc;
 
@@ -1424,14 +1394,7 @@ rbtree_inspect_recursive(VALUE self, VALUE arg, int recursive)
 VALUE
 rbtree_inspect(VALUE self)
 {
-#ifdef HAVE_RB_EXEC_RECURSIVE
     return rb_exec_recursive(rbtree_inspect_recursive, self, Qnil);
-#else
-    VALUE str = rbtree_begin_inspect(self);
-    if (rb_inspecting_p(self))
-        return rb_str_cat2(str, "...>");
-    return rb_protect_inspect(inspect_rbtree, self, str);
-#endif
 }
 
 /*
@@ -1522,7 +1485,6 @@ rbtree_bound_body(VALUE arg_)
     return result;
 }
 
-#ifdef HAVE_SIZED_ENUMERATOR
 static VALUE
 rbtree_bound_size(VALUE self, VALUE args)
 {
@@ -1551,7 +1513,6 @@ rbtree_bound_size(VALUE self, VALUE args)
     }
     return ULONG2NUM(count);
 }
-#endif
 
 /*********************************************************************/
 
@@ -1736,27 +1697,10 @@ static ID id_object_group;
 static ID id_pp;
 static ID id_text;
 
-#if defined(RUBY_VERSION_MAJOR) && RUBY_VERSION_MAJOR == 1 && RUBY_VERSION_MINOR == 8
-#define RUBY_1_8
-#endif
-
-#ifdef RUBY_1_8
-static VALUE
-pp_group(VALUE args_)
-{
-    VALUE* args = (VALUE*)args_;
-    return rb_funcall(args[0], id_group, 3, args[1], args[2], args[3]);
-}
-#endif
-
 static VALUE
 call_group_with_block(VALUE *group_args, VALUE (*blk)(RB_BLOCK_CALL_FUNC_ARGLIST(nil, arg)), VALUE data)
 {
-#ifdef RUBY_1_8
-    return rb_iterate(pp_group, (VALUE)&group_args, blk, data);
-#else
     return rb_block_call(group_args[0], id_group, 3, group_args + 1, blk, data);
-#endif
 }
 
 typedef struct {
@@ -1857,15 +1801,6 @@ pp_rbtree(RB_BLOCK_CALL_FUNC_ARGLIST(nil, arg))
     return rb_funcall(pp, id_pp, 1, CMP_PROC(rbtree));
 }
 
-#ifdef RUBY_1_8
-static VALUE
-pp_rbtree_group(VALUE arg_)
-{
-    pp_rbtree_arg_t* arg = (pp_rbtree_arg_t*)arg_;
-    return rb_funcall(arg->pp, id_object_group, 1, arg->rbtree);
-}
-#endif
-
 /*********************************************************************/
 
 /* :nodoc:
@@ -1877,11 +1812,7 @@ rbtree_pretty_print(VALUE self, VALUE pp)
     pp_rbtree_arg_t arg;
     arg.rbtree = self;
     arg.pp = pp;
-#ifdef RUBY_1_8
-    return rb_iterate(pp_rbtree_group, (VALUE)&arg, pp_rbtree, (VALUE)&arg);
-#else
     return rb_block_call(arg.pp, id_object_group, 1, &self, pp_rbtree, (VALUE)&arg);
-#endif
 }
 
 /* :nodoc:
@@ -1914,11 +1845,7 @@ rbtree_dump(VALUE self, VALUE limit)
     rb_ary_push(ary, IFNONE(self));
 
     result = rb_marshal_dump(ary, Qnil);
-#ifdef HAVE_RB_ARY_RESIZE
     rb_ary_resize(ary, 0);
-#else
-    rb_ary_clear(ary);
-#endif
     return result;
 }
 
@@ -1937,11 +1864,7 @@ rbtree_s_load(VALUE klass, VALUE str)
         rbtree_aset(rbtree, RARRAY_AREF(ary, i), RARRAY_AREF(ary, i + 1));
     IFNONE(rbtree) = RARRAY_AREF(ary, len);
 
-#ifdef HAVE_RB_ARY_RESIZE
     rb_ary_resize(ary, 0);
-#else
-    rb_ary_clear(ary);
-#endif
     return rbtree;
 }
 
@@ -2028,9 +1951,7 @@ void Init_rbtree(void)
     rb_define_method(MultiRBTree, "merge!", rbtree_update, 1);
     rb_define_method(MultiRBTree, "merge", rbtree_merge, 1);
     rb_define_method(MultiRBTree, "replace", rbtree_initialize_copy, 1);
-#ifdef HAVE_HASH_FLATTEN
     rb_define_method(MultiRBTree, "flatten", rbtree_flatten, -1);
-#endif
 
     rb_define_method(MultiRBTree, "include?", rbtree_has_key, 1);
     rb_define_method(MultiRBTree, "member?", rbtree_has_key, 1);
