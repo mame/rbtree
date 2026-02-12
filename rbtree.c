@@ -191,20 +191,18 @@ static VALUE
 rbtree_alloc(VALUE klass)
 {
     dict_t* dict;
-    VALUE rbtree = Data_Wrap_Struct(klass, rbtree_mark, rbtree_free, NULL);
-    RBTREE(rbtree) = ALLOC(rbtree_t);
-    MEMZERO(RBTREE(rbtree), rbtree_t, 1);
+    rbtree_t *t;
+    VALUE rbtree = Data_Make_Struct(klass, rbtree_mark, rbtree_free, t);
 
     dict = ALLOC(dict_t);
     dict_init(dict, rbtree_cmp);
-    dict_set_allocator(dict, rbtree_alloc_node, rbtree_free_node,
-                       RBTREE(rbtree));
+    dict_set_allocator(dict, rbtree_alloc_node, rbtree_free_node, t);
     if (!RTEST(rb_class_inherited_p(klass, RBTree)))
         dict_allow_dupes(dict);
 
-    DICT(rbtree) = dict;
-    IFNONE(rbtree) = Qnil;
-    CMP_PROC(rbtree) = Qnil;
+    t->dict = dict;
+    t->ifnone = Qnil;
+    t->cmp_proc = Qnil;
     return rbtree;
 }
 
