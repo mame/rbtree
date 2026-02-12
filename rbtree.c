@@ -64,16 +64,18 @@ typedef struct {
 /*********************************************************************/
 
 static void
-rbtree_free(rbtree_t* rbtree)
+rbtree_free(void* arg)
 {
+    rbtree_t* rbtree = arg;
     dict_free_nodes(rbtree->dict);
     xfree(rbtree->dict);
     xfree(rbtree);
 }
 
 static void
-rbtree_mark(rbtree_t* rbtree)
+rbtree_mark(void* arg)
 {
+    rbtree_t* rbtree = arg;
     if (rbtree == NULL) return;
 
     if (rbtree->dict != NULL) {
@@ -90,6 +92,15 @@ rbtree_mark(rbtree_t* rbtree)
     rb_gc_mark(rbtree->ifnone);
     rb_gc_mark(rbtree->cmp_proc);
 }
+
+#ifdef TypedData_Make_Struct
+static const rb_data_type_t rbtree_type = {
+    "RBTree",
+    {
+        rbtree_mark, rbtree_free,
+    },
+};
+#endif
 
 static dnode_t*
 rbtree_alloc_node(void* context)
@@ -192,7 +203,11 @@ rbtree_alloc(VALUE klass)
 {
     dict_t* dict;
     rbtree_t *t;
+#ifdef TypedData_Make_Struct
+    VALUE rbtree = TypedData_Make_Struct(klass, rbtree_t, &rbtree_type, t);
+#else
     VALUE rbtree = Data_Make_Struct(klass, rbtree_mark, rbtree_free, t);
+#endif
 
     dict = ALLOC(dict_t);
     dict_init(dict, rbtree_cmp);
