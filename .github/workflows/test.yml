@@ -3,11 +3,18 @@ name: test
 on: [push, pull_request]
 
 jobs:
+  ruby-versions:
+    if: ${{ startsWith(github.repository, 'ruby/') || github.event_name != 'schedule' }}
+    uses: ruby/actions/.github/workflows/ruby_versions.yml@master
+    with:
+      engine: cruby
+      min_version: 2.1
+
   build:
     strategy:
       fail-fast: false
       matrix:
-        ruby-version: [2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, head]
+        ruby-version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
