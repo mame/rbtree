@@ -14,7 +14,7 @@ to that of Hash.
 END
   s.homepage = "http://rbtree.rubyforge.org/"
   s.license = "MIT"
-  s.required_ruby_version = Gem::Requirement.new(">= 1.8.6")
+  s.required_ruby_version = Gem::Requirement.new(">= 2.1")
 
   s.require_paths = ["lib"]
   s.extensions = ["extconf.rb"]
