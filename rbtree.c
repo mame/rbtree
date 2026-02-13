@@ -1292,7 +1292,7 @@ to_a_i(dnode_t* node, void* ary)
 }
 
 
-#if defined(RUBY_API_VERSION_CODE) && RUBY_API_VERSION_CODE >= 30100
+#if !defined(OBJ_INFECT)
 #  define RBTREE_OBJ_INFECT(obj1, obj2)
 #else
 #  define RBTREE_OBJ_INFECT(obj1, obj2) OBJ_INFECT(obj1, obj2)
