@@ -1741,6 +1741,14 @@ static ID id_text;
 #endif
 
 #ifdef RUBY_1_8
+# define RB_BLOCK_CALL_FUNC_ARGLIST(yielded_arg, callback_arg) \
+    VALUE yielded_arg, VALUE callback_arg
+#elif !defined RB_BLOCK_CALL_FUNC_ARGLIST
+# define RB_BLOCK_CALL_FUNC_ARGLIST(yielded_arg, callback_arg) \
+    VALUE yielded_arg, VALUE callback_arg, int argc, const VALUE *argv, VALUE blockarg
+#endif
+
+#ifdef RUBY_1_8
 static VALUE
 pp_group(VALUE args_)
 {
