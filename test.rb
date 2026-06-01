@@ -854,11 +854,15 @@ class RBTreeTest < Test::Unit::TestCase
   begin
     require "pp"
 
+    def pp(rbtree=RBTree.new)
+      PP.pp(rbtree, String.new, 80)
+    end
+
     def test_pp
       assert_equal(%(#<RBTree: {}, default=nil, cmp_proc=nil>\n),
-                   PP.pp(RBTree.new, ""))
+                   pp)
       assert_equal(%(#<RBTree: {"a"=>"A", "b"=>"B"}, default=nil, cmp_proc=nil>\n),
-                   PP.pp(RBTree[*%w(a A b B)], ""))
+                   pp(RBTree[*%w(a A b B)]))
 
       rbtree = RBTree[*("a".."z").to_a]
       rbtree.default = "a"
@@ -880,7 +884,7 @@ class RBTreeTest < Test::Unit::TestCase
  default="a",
  cmp_proc=#{rbtree.cmp_proc}>
 EOS
-      assert_equal(expected, PP.pp(rbtree, ""))
+      assert_equal(expected, pp(rbtree))
 
       rbtree = RBTree.new
       rbtree[rbtree] = rbtree
@@ -890,7 +894,7 @@ EOS
  default="#<RBTree: ...>",
  cmp_proc=nil>
 EOS
-      assert_equal(expected, PP.pp(rbtree, ""))
+      assert_equal(expected, pp(rbtree))
     end
   rescue LoadError
   end
