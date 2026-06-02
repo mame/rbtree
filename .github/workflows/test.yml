@@ -11,6 +11,7 @@ jobs:
       min_version: 2.1
 
   build:
+    needs: ruby-versions
     strategy:
       fail-fast: false
       matrix:
