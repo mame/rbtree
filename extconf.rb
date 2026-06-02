@@ -5,13 +5,14 @@ if enable_config('debug')
 else
   $defs << '-DNDEBUG'
 end
-have_header('ruby/version.h')
+have_func('rb_block_call', 'ruby.h')
 have_func('rb_exec_recursive', 'ruby.h')
 have_func('rb_exec_recursive_paired', 'ruby.h')
 have_func('rb_proc_lambda_p', 'ruby.h')
 have_func('rb_ary_resize', 'ruby.h')
 have_func('rb_obj_hide', 'ruby.h')
 have_func('rb_safe_level', 'ruby.h')
+have_func('rb_gc_force_recycle', 'ruby.h')
 have_func('rb_cData', 'ruby.h')
 if Hash.method_defined?(:flatten)
   $defs << '-DHAVE_HASH_FLATTEN'

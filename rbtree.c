@@ -3,9 +3,6 @@
  * Copyright (c) 2002-2013 OZAWA Takuma
  */
 #include <ruby.h>
-#ifdef HAVE_RUBY_VERSION_H
-#include <ruby/version.h>
-#endif
 #ifdef HAVE_RUBY_ST_H
 #include <ruby/st.h>
 #else
@@ -786,9 +783,7 @@ copy_dict(VALUE src, VALUE dest, dict_comp_t cmp_func, VALUE cmp_proc)
     }
     rbtree_free(RBTREE(temp));
     RBTREE(temp) = NULL;
-#if defined(RUBY_API_VERSION_CODE) && RUBY_API_VERSION_CODE >= 30100
-    /* do nothing */
-#else
+#if defined(HAVE_RB_GC_FORCE_RECYCLE)
     rb_gc_force_recycle(temp);
 #endif
 
@@ -1297,7 +1292,7 @@ to_a_i(dnode_t* node, void* ary)
 }
 
 
-#if defined(RUBY_API_VERSION_CODE) && RUBY_API_VERSION_CODE >= 30100
+#if !defined(OBJ_INFECT)
 #  define RBTREE_OBJ_INFECT(obj1, obj2)
 #else
 #  define RBTREE_OBJ_INFECT(obj1, obj2) OBJ_INFECT(obj1, obj2)
@@ -1736,11 +1731,15 @@ static ID id_object_group;
 static ID id_pp;
 static ID id_text;
 
-#if defined(RUBY_VERSION_MAJOR) && RUBY_VERSION_MAJOR == 1 && RUBY_VERSION_MINOR == 8
-#define RUBY_1_8
+#if !defined HAVE_RB_BLOCK_CALL
+# define RB_BLOCK_CALL_FUNC_ARGLIST(yielded_arg, callback_arg) \
+    VALUE yielded_arg, VALUE callback_arg
+#elif !defined RB_BLOCK_CALL_FUNC_ARGLIST
+# define RB_BLOCK_CALL_FUNC_ARGLIST(yielded_arg, callback_arg) \
+    VALUE yielded_arg, VALUE callback_arg, int argc, const VALUE *argv
 #endif
 
-#ifdef RUBY_1_8
+#ifndef HAVE_RB_BLOCK_CALL
 static VALUE
 pp_group(VALUE args_)
 {
@@ -1752,7 +1751,7 @@ pp_group(VALUE args_)
 static VALUE
 call_group_with_block(VALUE *group_args, VALUE (*blk)(RB_BLOCK_CALL_FUNC_ARGLIST(nil, arg)), VALUE data)
 {
-#ifdef RUBY_1_8
+#ifndef HAVE_RB_BLOCK_CALL
     return rb_iterate(pp_group, (VALUE)&group_args, blk, data);
 #else
     return rb_block_call(group_args[0], id_group, 3, group_args + 1, blk, data);
@@ -1857,7 +1856,7 @@ pp_rbtree(RB_BLOCK_CALL_FUNC_ARGLIST(nil, arg))
     return rb_funcall(pp, id_pp, 1, CMP_PROC(rbtree));
 }
 
-#ifdef RUBY_1_8
+#ifndef HAVE_RB_BLOCK_CALL
 static VALUE
 pp_rbtree_group(VALUE arg_)
 {
@@ -1877,7 +1876,7 @@ rbtree_pretty_print(VALUE self, VALUE pp)
     pp_rbtree_arg_t arg;
     arg.rbtree = self;
     arg.pp = pp;
-#ifdef RUBY_1_8
+#ifndef HAVE_RB_BLOCK_CALL
     return rb_iterate(pp_rbtree_group, (VALUE)&arg, pp_rbtree, (VALUE)&arg);
 #else
     return rb_block_call(arg.pp, id_object_group, 1, &self, pp_rbtree, (VALUE)&arg);
