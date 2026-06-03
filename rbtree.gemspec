@@ -12,7 +12,7 @@ Red-Black Tree. It maps keys to values like a Hash, but maintains its
 elements in ascending key order. The interface is the almost identical
 to that of Hash.
 END
-  s.homepage = "http://rbtree.rubyforge.org/"
+  s.homepage = "https://github.com/mame/rbtree"
   s.license = "MIT"
   s.required_ruby_version = Gem::Requirement.new(">= 1.8.6")
 
