@@ -57,6 +57,9 @@ Run the following command.
   $ sudo gem install rbtree
 
 == Changes
+=== 0.4.7
+* Use the typed data API, as the untyped data API will be removed in Ruby 4.1.
+
 === 0.4.6
 * Make it work with clang 15.
 
